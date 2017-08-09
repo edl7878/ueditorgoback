@@ -229,7 +229,7 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 		if start+size-1 >= length {
 			resFileList = resFileList[start:]
 		} else {
-			resFileList = resFileList[start : start+size]//不含start+size元素
+			resFileList = resFileList[start : start+size] //不含start+size元素
 		}
 		responseStruct["list"] = resFileList
 		responseStruct["total"] = length
@@ -288,7 +288,7 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Form["userID"]
 	//支持UEditor serverparam，参数key定义为userID
 	if ok {
-		config["userID"]=userID[0]
+		config["userID"] = userID[0]
 	}
 
 	uploader.upFile()
@@ -385,15 +385,18 @@ func (this *Uploader) upFile() {
 	if err != nil {
 		this.stateInfo = err.Error()
 		fmt.Printf("upload file error: %s", err)
-	} else {
+	} else { //如果parase form 成功
 		this.oriName = fheader.Filename
+		//支持Stat接口么？
 		if stateInterface, ok := file.(Stat); ok {
 			fileInfo, _ := stateInterface.Stat()
 			this.fileSize = fileInfo.Size()
-		} else {
+		} else if sizeInterface, ok := file.(Size); ok { //支持Size接口?
+			this.fileSize = sizeInterface.Size()
+		} else {//都不支持
 			this.stateInfo = this.getStateInfo("ERROR_UNKNOWN")
+			return
 		}
-
 		this.fileType = this.getFileExt()
 		this.fullName = this.getFullName()
 		this.filePath = this.getFilePath()
@@ -476,9 +479,9 @@ func (this *Uploader) getFullName() string {
 	//{yyyy}{mm}{dd}{time}{rand:6}部分应不出现"/"符号，否则listimage Action无法解析
 	index := strings.LastIndex(format, "/")
 	if index != -1 {
-		userID,ok:=this.config["userID"]
-		if ok{
-			format = format[0:index+1] + userID.(string)+"/" + format[index:]
+		userID, ok := this.config["userID"]
+		if ok {
+			format = format[0:index+1] + userID.(string) + "/" + format[index:]
 		}
 	}
 	format = strings.Replace(format, "{yyyy}", strconv.Itoa(t.Year()), 1)
